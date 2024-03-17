@@ -1,0 +1,745 @@
+/*****************************************************************************
+ * axvlc.idl: ActiveX control for VLC
+ *****************************************************************************
+ * Copyright (C) 2006 the VideoLAN team
+ * Copyright (C) 2010 M2X BV
+ *
+ * Authors: Damien Fouilleul <Damien.Fouilleul@laposte.net>
+ *          Jean-Paul Saman <jpsaman _at_ m2x _dot_ nl>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.
+ *****************************************************************************/
+
+// comments terminated by [t] are by tonsofpcs, regarding the string
+// review. April 02, 2006. [t]
+// Possibly change all instances of "the current playlist" to "the
+// playlist" and "current playlist" to "the playlist" [t]
+
+import "ocidl.idl";
+#include <olectl.h>
+#include <idispids.h>
+
+[
+  uuid(DF2BBE39-40A8-433b-A279-073F48DA94B6),
+  version(1.0),
+  helpstring("VideoLAN VLC ActiveX Plugin")
+]
+library AXVLC
+{
+    // Forward declare all types defined in this typelib
+    interface IVLCAudio;
+    interface IVLCChapter;
+    interface IVLCInput;
+    interface IVLCLogo;
+    interface IVLCDeinterlace;
+    interface IVLCMarquee;
+    interface IVLCPlaylist;
+    interface IVLCSubtitle;
+    interface IVLCTitle;
+    interface IVLCVideo;
+    interface IVLCControl2;
+    dispinterface DVLCEvents;
+
+    importlib("stdole2.tlb");
+
+    typedef [public] enum VLCPlaylistMode
+    {
+        VLCPlayListInsert       =  1,
+        VLCPlayListInsertAndGo  =  9,
+        VLCPlayListReplace      =  2,
+        VLCPlayListReplaceAndGo = 10,
+        VLCPlayListAppend       =  4,
+        VLCPlayListAppendAndGo  = 12,
+        VLCPlayListCheckInsert  = 16
+    } eVLCPlaylistMode;
+
+    const int DISPID_Visible    = 100;
+
+    /* async events from libvlc */
+    const int DISPID_MediaPlayerNothingSpecialEvent = 200;
+    const int DISPID_MediaPlayerOpeningEvent = 201;
+    const int DISPID_MediaPlayerBufferingEvent = 202;
+    const int DISPID_MediaPlayerPlayingEvent = 203;
+    const int DISPID_MediaPlayerPausedEvent = 204;
+    const int DISPID_MediaPlayerForwardEvent = 205;
+    const int DISPID_MediaPlayerBackwardEvent = 206;
+    const int DISPID_MediaPlayerEncounteredErrorEvent = 207;
+    const int DISPID_MediaPlayerEndReachedEvent = 208;
+    const int DISPID_MediaPlayerStoppedEvent = 209;
+
+    const int DISPID_MediaPlayerTimeChangedEvent = 210;
+    const int DISPID_MediaPlayerPositionChangedEvent = 211;
+    const int DISPID_MediaPlayerSeekableChangedEvent = 212;
+    const int DISPID_MediaPlayerPausableChangedEvent = 213;
+    const int DISPID_MediaPlayerMediaChangedEvent = 214;
+    const int DISPID_MediaPlayerTitleChangedEvent = 215;
+    const int DISPID_MediaPlayerLengthChangedEvent = 216;
+    const int DISPID_MediaPlayerChapterChangedEvent = 217;
+
+    const int DISPID_MediaPlayerVoutEvent = 218;
+    const int DISPID_MediaPlayerMutedEvent = 219;
+    const int DISPID_MediaPlayerUnmutedEvent = 220;
+    const int DISPID_MediaPlayerAudioVolumeEvent = 221;
+    const int DISPID_MediaPlayerStopAsyncDoneEvent = 222;
+
+    [
+      uuid(DF48072F-5EF8-434e-9B40-E2F3AE759B5F),
+      helpstring("Event interface for VLC control"),
+    ]
+    dispinterface DVLCEvents
+    {
+        properties:
+        methods:
+            /* async events from libvlc */
+            [id(DISPID_MediaPlayerNothingSpecialEvent), helpstring("Idle state")]
+            void MediaPlayerNothingSpecial();
+            [id(DISPID_MediaPlayerOpeningEvent), helpstring("Opening media")]
+            void MediaPlayerOpening();
+            [id(DISPID_MediaPlayerBufferingEvent), helpstring("Buffering media")]
+            void MediaPlayerBuffering([in] long cache);
+            [id(DISPID_MediaPlayerPlayingEvent), helpstring("Media is playing")]
+            void MediaPlayerPlaying();
+            [id(DISPID_MediaPlayerPausedEvent), helpstring("Media is paused")]
+            void MediaPlayerPaused();
+            [id(DISPID_MediaPlayerForwardEvent), helpstring("Forward playback")]
+            void MediaPlayerForward();
+            [id(DISPID_MediaPlayerBackwardEvent), helpstring("Backward playback")]
+            void MediaPlayerBackward();
+            [id(DISPID_MediaPlayerEncounteredErrorEvent), helpstring("An error has been encountered")]
+            void MediaPlayerEncounteredError();
+            [id(DISPID_MediaPlayerEndReachedEvent), helpstring("End of playback reached")]
+            void MediaPlayerEndReached();
+            [id(DISPID_MediaPlayerStoppedEvent), helpstring("Playback stopped")]
+            void MediaPlayerStopped();
+            [id(DISPID_MediaPlayerStopAsyncDoneEvent), helpstring("Playback stop async done")]
+            void MediaPlayerStopAsyncDone();
+
+            [id(DISPID_MediaPlayerTimeChangedEvent), helpstring("Time changed")]
+            void MediaPlayerTimeChanged([in] long time);
+            [id(DISPID_MediaPlayerPositionChangedEvent), helpstring("Position changed")]
+            void MediaPlayerPositionChanged([in] float position);
+            [id(DISPID_MediaPlayerSeekableChangedEvent), helpstring("Seek changed")]
+            void MediaPlayerSeekableChanged([in] VARIANT_BOOL seekable);
+            [id(DISPID_MediaPlayerPausableChangedEvent), helpstring("Pause setting changed")]
+            void MediaPlayerPausableChanged([in] VARIANT_BOOL pausable);
+            [id(DISPID_MediaPlayerMediaChangedEvent), helpstring("Media changed")]
+            void MediaPlayerMediaChanged();
+            [id(DISPID_MediaPlayerTitleChangedEvent), helpstring("Title changed")]
+            void MediaPlayerTitleChanged([in] int title);
+            [id(DISPID_MediaPlayerLengthChangedEvent), helpstring("Length changed")]
+            void MediaPlayerLengthChanged([in] long length);
+            [id(DISPID_MediaPlayerChapterChangedEvent), helpstring("Chapter changed")]
+            void MediaPlayerChapterChanged([in] int chapter);
+
+            [id(DISPID_MediaPlayerVoutEvent), helpstring("Number of vout changed")]
+            void MediaPlayerVout([in] int count);
+            [id(DISPID_MediaPlayerMutedEvent), helpstring("Audio muted")]
+            void MediaPlayerMuted();
+            [id(DISPID_MediaPlayerUnmutedEvent), helpstring("Audio unmuted")]
+            void MediaPlayerUnmuted();
+            [id(DISPID_MediaPlayerAudioVolumeEvent), helpstring("Audio volume changed")]
+            void MediaPlayerAudioVolume([in] float volume);
+
+
+            [id(DISPID_CLICK)]
+            void Click();
+            [id(DISPID_DBLCLICK)]
+            void DblClick( );
+
+            [id(DISPID_KEYDOWN)]
+            void KeyDown( short* KeyCode, short Shift );
+            [id(DISPID_KEYPRESS)]
+            void KeyPress( short* KeyAscii );
+            [id(DISPID_KEYUP)]
+            void KeyUp( short* KeyCode, short Shift );
+
+            [id(DISPID_MOUSEDOWN)]
+            void MouseDown( short Button , short Shift , long x , long y);
+            [id(DISPID_MOUSEMOVE)]
+            void MouseMove( short Button , short Shift , long x , long y);
+            [id(DISPID_MOUSEUP)]
+            void MouseUp( short Button , short Shift , long x, long y);
+    };
+
+    [
+      odl,
+      uuid(9E0BD17B-2D3C-4656-B94D-03084F3FD9D4),
+      helpstring("VLC Audio APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCAudio : IDispatch
+    {
+        [propget, helpstring("Returns/sets the audio mute state.")]
+        HRESULT mute([out, retval] VARIANT_BOOL* muted);
+        [propput, helpstring("Returns/sets the audio mute state.")]
+        HRESULT mute([in] VARIANT_BOOL muted);
+
+        [propget, helpstring("Returns/sets audio volume as a percent value.")]
+        HRESULT volume([out, retval] long* volume);
+        [propput, helpstring("Returns/sets audio volume as a percent value.")]
+        HRESULT volume([in] long volume);
+
+        [helpstring("Mute/unmute audio playback.")]
+        HRESULT toggleMute();
+
+        [propget, helpstring("Returns/sets audio track used/to use.")]
+        HRESULT track([out, retval] long* track);
+        [propput, helpstring("Returns/sets audio track used/to use.")]
+        HRESULT track([in] long track);
+
+        [propget, helpstring("Returns the number of audio tracks available.")]
+        HRESULT count([out, retval] long* trackNumber);
+        [helpstring("Returns audio track name.")]
+        HRESULT description([in] long trackID, [out, retval] BSTR* name);
+
+        [propget, helpstring("Returns audio channel [1-5] indicating; stereo, reverse stereo, left, right, dolby.")]
+        HRESULT channel([out, retval] long* channel);
+        [propput, helpstring("Sets audio channel to [1-5] indicating; stereo, reverse stereo, left, right, dolby.")]
+        HRESULT channel([in] long channel);
+    };
+
+    [
+      odl,
+      uuid(b5def5a1-ffb6-4e68-b3d8-a12ac60fda54),
+      helpstring("VLC Title APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCTitle : IDispatch
+    {
+        [propget, helpstring("Returns the number of title tracks available.")]
+        HRESULT count([out, retval] long* countTracks);
+
+        [propget, helpstring("Returns/sets title track used/to use.")]
+        HRESULT track([out, retval] long* track);
+        [propput, helpstring("Returns/sets title track used/to use.")]
+        HRESULT track([in] long track);
+
+        [helpstring("Returns the current title track name.")]
+        HRESULT description([in] long track, [out, retval] BSTR* name);
+    };
+
+    [
+      odl,
+      uuid(5af314cf-8849-4a79-a3fc-8de6625d9e72),
+      helpstring("VLC Chapter APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCChapter : IDispatch
+    {
+        [propget, helpstring("Returns the number of chapter tracks available.")]
+        HRESULT count([out, retval] long* countTracks);
+
+        [helpstring("Returns the number of chapter tracks available of a specific title.")]
+        HRESULT countForTitle([in] long title, [out, retval] long* countTracks);
+
+        [propget, helpstring("Returns/sets chapter track used/to use.")]
+        HRESULT track([out, retval] long* track);
+        [propput, helpstring("Returns/sets chapter track used/to use.")]
+        HRESULT track([in] long track);
+
+        [helpstring("Returns the current chapter track name.")]
+        HRESULT description([in] long title, [in] long chapter, [out, retval] BSTR* name);
+
+        [helpstring("Advance to next chapter in current title.")]
+        HRESULT next();
+
+        [helpstring("Advance to previous chapter in current title.")]
+        HRESULT prev();
+    };
+
+    [
+      odl,
+      uuid(49E0DBD1-9440-466C-9C97-95C67190C603),
+      helpstring("VLC Input APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCInput : IDispatch
+    {
+        [propget, helpstring("Returns the clip length, in milliseconds.")]
+        HRESULT length([out, retval] double* length);
+
+        [propget, helpstring("Returns/sets playback position in current clip.  Position is ranging from 0.0 to 1.0.")]
+        HRESULT position([out, retval] double* position);
+        [propput, helpstring("Returns/sets playback position in the current clip.  Position ranging from 0.0 to 1.0.")]
+        HRESULT position([in] double position);
+
+        [propget, helpstring("Returns/sets playback time in current clip, in milliseconds.")]
+        HRESULT time([out, retval] double* time);
+        [propput, helpstring("Returns/sets playback time in the current clip, in milliseconds.")]
+        HRESULT time([in] double time);
+
+        [propget, helpstring("Returns current playback state.")]
+        HRESULT state([out, retval] long* state);
+
+        [propget, helpstring("Returns/sets current playback rate, normal rate is 1.0 ")]
+        HRESULT rate([out, retval] double* rate);
+        [propput, helpstring("Returns/sets current playback rate, normal rate is 1.0.")]
+        HRESULT rate([in] double rate);
+
+        [propget, helpstring("Returns current playback frames per seconds if available.")]
+        HRESULT fps([out, retval] double* fps);
+
+        [propget, helpstring("Returns whether current playback displays video.")]
+        HRESULT hasVout([out, retval] VARIANT_BOOL* hasVout);
+
+        [propget, helpstring("Returns the title object.")]
+        HRESULT title([out, retval] IVLCTitle** obj);
+
+        [propget, helpstring("Returns the chapter object.")]
+        HRESULT chapter([out, retval] IVLCChapter** obj);
+    };
+
+    [
+      odl,
+      uuid(FD37FE32-82BC-4A25-B056-315F4DBB194D),
+      helpstring("VLC Playlist Items collection"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCPlaylistItems : IDispatch
+    {
+        [propget, helpstring("Returns number of items in playlist.")]
+        HRESULT count([out, retval] long* count);
+
+        [helpstring("Remove all items from playlist.")]
+        HRESULT clear();
+
+        [helpstring("remove item from playlist.")]
+        HRESULT remove([in] long itemId);
+    };
+
+    [
+      odl,
+      uuid(54613049-40BF-4035-9E70-0A9312C0188D),
+      helpstring("VLC Playlist APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCPlaylist : IDispatch
+    {
+        [hidden, propget, helpstring("Returns number of items in playlist. (deprecated)")]
+        HRESULT itemCount([out, retval] long* count);
+
+        [propget, helpstring("Returns whether playback displays video.")]
+        HRESULT isPlaying([out, retval] VARIANT_BOOL* playing);
+
+        [propget, helpstring("Returns index of current item in playlist.")]
+        HRESULT currentItem([out, retval] long* index);
+
+        [helpstring("Add a playlist item.")]
+        HRESULT add([in] BSTR uri, [in, optional] VARIANT name, [in, optional] VARIANT options, [out, retval] long* itemId);
+
+        [helpstring("Play/Resume the playlist.")]
+        HRESULT play();
+
+        [helpstring("Play item in playlist.")]
+        HRESULT playItem([in] long itemId);
+
+        [helpstring("Pause the playlist.")]
+        HRESULT pause();
+
+        [helpstring("Play/Pause current clip.")]
+        HRESULT togglePause();
+
+        [helpstring("Stop current clip.")]
+        HRESULT stop();
+
+        [helpstring("Stop current clip asynchronously.")]
+        HRESULT stop_async();
+
+        [helpstring("Advance to next item in playlist.")]
+        HRESULT next();
+
+        [helpstring("Advance to previous item in playlist.")]
+        HRESULT prev();
+
+        [hidden, helpstring("Remove all items from playlist. (deprecated)")]
+        HRESULT clear();
+
+        [hidden, helpstring("Remove item from playlist. (deprecated)")]
+        HRESULT removeItem([in] long item);
+
+        [propget, helpstring("Returns the playlist items collection object.")]
+        HRESULT items([out, retval] IVLCPlaylistItems** obj);
+
+        [helpstring("Parse the head media from playlist")]
+        HRESULT parse([in] long options, [in] long timeout_ms, [out, retval] long* status);
+    };
+
+    [
+      odl,
+      uuid(465E787A-0556-452F-9477-954E4A940003),
+      helpstring("VLC Subtitle APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCSubtitle : IDispatch
+    {
+        [propget, helpstring("Returns video subtitle used.")]
+        HRESULT track([out, retval] long* spu);
+        [propput, helpstring("Sets video subtitle to use.")]
+        HRESULT track([in] long spu);
+
+        [propget, helpstring("Returns the number of video subtitles available.")]
+        HRESULT count([out, retval] long* spuNumber);
+        [helpstring("Returns video subtitle name.")]
+        HRESULT description([in] long nameID, [out, retval] BSTR* name);
+    };
+
+    [
+      odl,
+      uuid(8D076AD6-9B6F-4150-A0FD-5D7E8C8CB02C),
+      helpstring("VLC Marquee Filter"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCMarquee : IDispatch
+    {
+        [helpstring("enable Marquee Filter.")]
+        HRESULT enable();
+        [helpstring("disable Marquee Filter.")]
+        HRESULT disable();
+
+        [propput, helpstring("Change marquee text.")]
+        HRESULT text([in] BSTR val);
+
+        [propget, helpstring("Retrieve text color.")]
+        HRESULT color([out, retval] LONG* val);
+        [propput, helpstring("Change text color.")]
+        HRESULT color([in] LONG val);
+        [propget, helpstring("Retrieve text opacity.")]
+        HRESULT opacity([out, retval] LONG* val);
+        [propput, helpstring("Set text opacity (0=transparent, 255=opaque).")]
+        HRESULT opacity([in] LONG val);
+        [propget, helpstring("Retrieve text position.")]
+        HRESULT position([out, retval] BSTR* val);
+        [propput, helpstring("Text positioning relative to: center, left, right, top, bottom, top-left, top-right, bottom-left, bottom-right.")]
+        HRESULT position([in] BSTR val);
+        [propget, helpstring("Retrieve text refresh time.")]
+        HRESULT refresh([out, retval] LONG* val);
+        [propput, helpstring("Set text refresh time.")]
+        HRESULT refresh([in] LONG val);
+        [propget, helpstring("Retrieve text size.")]
+        HRESULT size([out, retval] LONG* val);
+        [propput, helpstring("Set text size.")]
+        HRESULT size([in] LONG val);
+        [propget, helpstring("Retrieve timeout.")]
+        HRESULT timeout([out, retval] LONG* val);
+        [propput, helpstring("Change timeout.")]
+        HRESULT timeout([in] LONG val);
+        [propget, helpstring("Retrieve text abcissa.")]
+        HRESULT x([out, retval] LONG* val);
+        [propput, helpstring("Change text abcissa.")]
+        HRESULT x([in] LONG val);
+        [propget, helpstring("Retrieve text ordinate.")]
+        HRESULT y([out, retval] LONG* val);
+        [propput, helpstring("Change text ordinate.")]
+        HRESULT y([in] LONG val);
+    };
+
+    [
+      odl,
+      uuid(8a4a20c2-93f3-44e8-8644-beb2e3487e84),
+      helpstring("VLC Logo Filter"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCLogo : IDispatch
+    {
+        [helpstring("Enable the logo filter.")]
+        HRESULT enable();
+        [helpstring("Disable the logo filter.")]
+        HRESULT disable();
+
+        [helpstring("specify input file[[,delay],alpha].")]
+        HRESULT file([in] BSTR fname);
+
+        [propget, helpstring("")]
+        HRESULT delay([out, retval] long* val);
+        [propput, helpstring("Set delay-to-next-picture in miliseconds.")]
+        HRESULT delay([in] long val);
+
+        [propget, helpstring("")]
+        HRESULT repeat([out, retval] long* val);
+        [propput, helpstring("Repeat: -1 continuous (default), 0 no repeat, ....")]
+        HRESULT repeat([in] long val);
+
+        [propget, helpstring("Returns the `global' alpha value.")]
+        HRESULT opacity([out, retval] long* val);
+        [propput, helpstring("Alpha value: 0 opaque to 255 fully transparent")]
+        HRESULT opacity([in] long val);
+
+        [propget, helpstring("Retrieve picture position.")]
+        HRESULT position([out, retval] BSTR* val);
+        [propput, helpstring("Picture positioning relative to: center, left, right, top, bottom, top-left, top-right, bottom-left, bottom-right.")]
+        HRESULT position([in] BSTR val);
+
+        [propget, helpstring("Picture x offset.")]
+        HRESULT x([out, retval] long* val);
+        [propput, helpstring("Picture x offset.")]
+        HRESULT x([in] long val);
+        [propget, helpstring("Picture y offset.")]
+        HRESULT y([out, retval] long* val);
+        [propput, helpstring("Picture y offset.")]
+        HRESULT y([in] long val);
+
+    };
+    [
+      odl,
+      uuid(bc97469f-cb11-4037-8dce-5fc9f5f85307),
+      helpstring("VLC Deinterlace Filter"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCDeinterlace : IDispatch
+    {
+        [helpstring("Enable deinterlace filter and set method.")]
+        HRESULT enable([in] BSTR mode);
+        [helpstring("Disable deinterlace filter.")]
+        HRESULT disable();
+
+    };
+
+    [
+      odl,
+      uuid(0AAEDF0B-D333-4B27-A0C6-BBF31413A42E),
+      helpstring("VLC Video APIs"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCVideo : IDispatch
+    {
+        [propget, helpstring("Returns/sets the fullscreen state.")]
+        HRESULT fullscreen([out, retval] VARIANT_BOOL* fullscreen);
+
+        [propput, helpstring("Returns/sets the fullscreen state.")]
+        HRESULT fullscreen([in] VARIANT_BOOL fullscreen);
+
+        [propget, helpstring("Returns video original width.")]
+        HRESULT width([out, retval] long* width);
+
+        [propget, helpstring("Returns video original height.")]
+        HRESULT height([out, retval] long* height);
+
+        [propget, helpstring("Returns video aspect ratio.")]
+        HRESULT aspectRatio([out, retval] BSTR* aspect);
+        [propput, helpstring("Sets video aspect ratio.")]
+        HRESULT aspectRatio([in] BSTR aspect);
+
+        [propget, helpstring("Returns video scale.")]
+        HRESULT scale([out, retval] float* aspect);
+        [propput, helpstring("Sets video scale.")]
+        HRESULT scale([in] float aspect);
+
+        [propget, helpstring("Returns video subtitle used.")]
+        HRESULT subtitle([out, retval] long* spu);
+        [propput, helpstring("Sets video subtitle to use.")]
+        HRESULT subtitle([in] long spu);
+
+        [propput, helpstring("Sets crop ratio.")]
+        HRESULT crop_ratio([in] ULONG num, [in] ULONG den);
+        [propput, helpstring("Sets crop window.")]
+        HRESULT crop_window([in] ULONG x, [in] ULONG y, [in] ULONG width, [in] ULONG height);
+        [propput, helpstring("Sets crop border.")]
+        HRESULT crop_border([in] ULONG left, [in] ULONG right, [in] ULONG top, [in] ULONG bottom);
+
+        [propget, helpstring("Returns teletext page used.")]
+        HRESULT teletext([out, retval] long* page);
+        [propput, helpstring("Sets teletext page to use.")]
+        HRESULT teletext([in] long page);
+
+        [helpstring("toggle fullscreen/windowed state.")]
+        HRESULT toggleFullscreen();
+
+        [helpstring("take video snapshot and save it into picture object.")]
+        HRESULT takeSnapshot([out, retval] IPictureDisp** picture);
+
+        [helpstring("toggle teletext transparent state.")]
+        HRESULT toggleTeletext();
+
+        [propget, helpstring("Returns/sets video track used/to use.")]
+        HRESULT track([out, retval] long* track);
+        [propput, helpstring("Returns/sets video track used/to use.")]
+        HRESULT track([in] long track);
+
+        [propget, helpstring("Returns the number of video tracks available.")]
+        HRESULT count([out, retval] long* trackNumber);
+        [helpstring("Returns video track name.")]
+        HRESULT description([in] long trackID, [out, retval] BSTR* name);
+
+        [propget, helpstring("Returns the marquee object.")]
+        HRESULT marquee([out, retval] IVLCMarquee** obj);
+
+        [propget, helpstring("Returns the logo object.")]
+        HRESULT logo([out, retval] IVLCLogo** obj);
+
+        [propget, helpstring("Returns the logo object.")]
+        HRESULT deinterlace([out, retval] IVLCDeinterlace** obj);
+    };
+
+    [
+      odl,
+      uuid(796A2C2D-5B11-4fb5-9077-56D5E674972B),
+      helpstring("VLC Media Description"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCMediaDescription : IDispatch
+    {
+        [propget]
+        HRESULT title([out, retval] BSTR* val);
+        [propget]
+        HRESULT artist([out, retval] BSTR* val);
+        [propget]
+        HRESULT genre([out, retval] BSTR* val);
+        [propget]
+        HRESULT copyright([out, retval] BSTR* val);
+        [propget]
+        HRESULT album([out, retval] BSTR* val);
+        [propget]
+        HRESULT trackNumber([out, retval] BSTR* val);
+        [propget]
+        HRESULT description([out, retval] BSTR* val);
+        [propget]
+        HRESULT rating([out, retval] BSTR* val);
+        [propget]
+        HRESULT date([out, retval] BSTR* val);
+        [propget]
+        HRESULT setting([out, retval] BSTR* val);
+        [propget]
+        HRESULT URL([out, retval] BSTR* val);
+        [propget]
+        HRESULT language([out, retval] BSTR* val);
+        [propget]
+        HRESULT nowPlaying([out, retval] BSTR* val);
+        [propget]
+        HRESULT publisher([out, retval] BSTR* val);
+        [propget]
+        HRESULT encodedBy([out, retval] BSTR* val);
+        [propget]
+        HRESULT artworkURL([out, retval] BSTR* val);
+        [propget]
+        HRESULT trackID([out, retval] BSTR* val);
+    }
+
+    [
+      odl,
+      uuid(2D719729-5333-406C-BF12-8DE787FD65E3),
+      helpstring("VLC Control"),
+      dual,
+      oleautomation
+    ]
+    interface IVLCControl2 : IDispatch
+    {
+        [propget, helpstring("Returns/sets a value that determines whether the playlist is looped")]
+        HRESULT AutoLoop([out, retval] VARIANT_BOOL* autoloop);
+        [propput, helpstring("Returns/sets a value that determines whether the playlist is looped")]
+        HRESULT AutoLoop([in] VARIANT_BOOL autoloop);
+
+        [propget, helpstring("Returns/sets a value that determines whether the playlist is played on startup")]
+        HRESULT AutoPlay([out, retval] VARIANT_BOOL* autoplay);
+        [propput, helpstring("Returns/Sets a value that determines whether the playlist is played on startup")]
+        HRESULT AutoPlay([in] VARIANT_BOOL autoplay);
+
+        [propget, helpstring("Returns/sets the base URL for relative paths")]
+        HRESULT BaseURL([out, retval] BSTR* url);
+        [propput, helpstring("Returns/sets the base URL for relative paths")]
+        HRESULT BaseURL([in] BSTR url);
+
+        [propget, helpstring("Returns/sets playback start time of URL.")]
+        HRESULT StartTime([out, retval] long* seconds);
+        [propput, helpstring("Returns/sets playback start time of URL.")]
+        HRESULT StartTime([in] long seconds);
+
+        [propget, helpstring("Returns/sets the default MRL in playlist")]
+        HRESULT MRL([out, retval] BSTR* mrl);
+        [propput, helpstring("Returns/sets the default MRL in playlist")]
+        HRESULT MRL([in] BSTR mrl);
+
+        [propget, helpstring("Returns the VLC version")]
+        HRESULT VersionInfo([out, retval] BSTR* version);
+
+        [helpstring("Returns the VLC version")]
+        HRESULT getVersionInfo([out, retval] BSTR* version);
+
+        [propget, helpstring("Returns/sets a value that determines whether viewing area is visible or hidden.")]
+        HRESULT Visible([out, retval] VARIANT_BOOL* visible);
+        [propput, helpstring("Returns/sets a value that determines whether viewing area is visible or hidden.")]
+        HRESULT Visible([in] VARIANT_BOOL visible);
+
+        [propget, helpstring("Returns/sets default audio volume.")]
+        HRESULT Volume([out, retval] long* volume);
+        [propput, helpstring("Returns/sets default audio volume.")]
+        HRESULT Volume([in] long volume);
+
+        [propget, helpstring("Returns/sets background color.")]
+        HRESULT BackColor([out, retval] OLE_COLOR* backcolor);
+        [propput, helpstring("Returns/sets background color.")]
+        HRESULT BackColor([in] OLE_COLOR backcolor);
+
+        /*
+         * caution: vlcobject.toolbar:bool does not yet exists in Firefox
+         * plugin. Official usage is through "toolbar" property for now,
+         * which is compatibile with Firefox.
+         */
+        [propget, helpstring("Returns/sets visibility of the toolbar")]
+        HRESULT Toolbar([out, retval] VARIANT_BOOL* visible);
+        [propput, helpstring("Returns/sets visibility of the toolbar")]
+        HRESULT Toolbar([in] VARIANT_BOOL visible);
+
+        [propget, helpstring("Returns the audio object.")]
+        HRESULT audio([out, retval] IVLCAudio** obj);
+
+        [propget, helpstring("Returns the input object.")]
+        HRESULT input([out, retval] IVLCInput** obj);
+
+        [propget, helpstring("Returns the playlist object.")]
+        HRESULT playlist([out, retval] IVLCPlaylist** obj);
+
+        [propget, helpstring("Returns the subtitle object.")]
+        HRESULT subtitle([out, retval] IVLCSubtitle** obj);
+
+        [propget, helpstring("Returns the video object.")]
+        HRESULT video([out, retval] IVLCVideo** obj);
+
+        [propget, helpstring("Returns/sets availability of fullscreen mode.")]
+        HRESULT FullscreenEnabled([out, retval] VARIANT_BOOL* enabled);
+        [propput, helpstring("Returns/sets availability of fullscreen mode.")]
+        HRESULT FullscreenEnabled([in] VARIANT_BOOL enabled);
+
+        [propget, helpstring("Returns the media description object.")]
+        HRESULT mediaDescription([out, retval] IVLCMediaDescription** obj);
+
+        [propget, helpstring("Returns/sets visibility of the VLC branding.")]
+        HRESULT Branding([out, retval] VARIANT_BOOL* visible);
+        [propput, helpstring("Returns/sets visibility of the VLC branding.")]
+        HRESULT Branding([in] VARIANT_BOOL visible);
+    };
+
+    [
+      uuid(9BE31822-FDAD-461B-AD51-BE1D1C159921),
+      helpstring("VLC control"),
+      control
+    ]
+    coclass VLCPlugin2
+    {
+        [default] interface IVLCControl2;
+        [default, source] dispinterface DVLCEvents;
+    };
+};

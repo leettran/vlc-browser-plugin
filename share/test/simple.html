@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Simplest VLC plugin test</title>
+
+<script type="text/javascript">
+function play(tgt)
+{
+    var uri = "http://streams.videolan.org/streams/mp4/Mr_MrsSmith-h264_aac.mp4";
+    if (document.all) tgt += "_IE"
+    var vlc = document.getElementById(tgt);
+   // alert(vlc);
+    vlc.playlist.add(uri);
+    vlc.playlist.play();
+}
+function reload()
+{
+    document.body.innerHTML = "";
+    setTimeout("document.location.reload();", 500);
+}
+</script>
+<body onload="play('vlc1')">
+<h1>Simplest VLC plugin test</h1>
+
+<object id='vlc1_IE' height="240" width="320" classid="clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921">
+    <embed type="application/x-vlc-plugin" pluginspage="http://www.videolan.org"
+        width="320"
+        height="240"
+        id="vlc1" />
+</object>
+
+<hr>
+<button onclick="play('vlc1')">play in VLC1</button>
+<br><br>
+ 
+<button onclick="reload()">reload</button>
+</body>
+</html>

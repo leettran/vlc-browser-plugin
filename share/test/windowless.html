@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>VLC windowless Plugin test page</title>
+
+<style type="text/css">
+body {
+    background: grey;
+}
+
+form {
+    display:inline;
+}
+</style>
+
+<script type="text/javascript">
+<!--
+function init()
+{
+    if( navigator.appName.indexOf("Microsoft Internet") == -1 )
+    {
+        onVLCPluginReady()
+    }
+    else if( document.readyState == 'complete' )
+    {
+        onVLCPluginReady();
+    }
+    else
+    {
+        /* Explorer loads plugins asynchronously */
+        document.onreadystatechange = function()
+        {
+            if( document.readyState == 'complete' )
+            {
+                onVLCPluginReady();
+            }
+        }
+    }
+}
+
+function getVLC(name)
+{
+    if( window.document[name] )
+    {
+        return window.document[name];
+    }
+    if( navigator.appName.indexOf("Microsoft Internet") == -1 )
+    {
+        if( document.embeds && document.embeds[name] )
+            return document.embeds[name];
+    }
+    else
+    {
+        return document.getElementById(name);
+    }
+}
+
+function registerVLCEvent(event, handler)
+{
+    var vlc = getVLC("vlc");
+
+    if( vlc )
+    {
+        if( vlc.attachEvent )
+        {
+            // Microsoft
+            vlc.attachEvent(event, handler);
+        }
+        else if( vlc.addEventListener )
+        {
+            // Mozilla: DOM level 2
+            vlc.addEventListener(event, handler, false);
+        }
+    }
+}
+
+function unregisterVLCEvent(event, handler)
+{
+    var vlc = getVLC("vlc");
+
+    if( vlc )
+    {
+        if( vlc.detachEvent )
+        {
+            // Microsoft
+            vlc.detachEvent(event, handler);
+        }
+        else if( vlc.removeEventListener )
+        {
+            // Mozilla: DOM level 2
+            vlc.removeEventListener(event, handler, false);
+        }
+    }
+}
+
+// JS VLC API callbacks
+function handleMediaPlayerMediaChanged()
+{
+    document.getElementById("info").innerHTML = "Media Changed";
+}
+
+function handle_MediaPlayerNothingSpecial()
+{
+    document.getElementById("state").innerHTML = "Idle...";
+}
+
+function handle_MediaPlayerOpening()
+{
+    onOpen();
+}
+
+function handle_MediaPlayerBuffering(val)
+{
+    var vlc = getVLC("vlc");
+
+    document.getElementById("info").innerHTML = val + "%";
+
+    if( vlc && val == 100 )
+    {
+        // display the current state after buffering
+        if( vlc.playlist.isPlaying )
+            onPlay();
+        else
+            onPause();
+    }
+}
+
+function handle_MediaPlayerPlaying()
+{
+    onPlay();
+}
+
+function handle_MediaPlayerPaused()
+{
+    onPause();
+}
+
+function handle_MediaPlayerStopped()
+{
+    onStop();
+}
+
+function handle_MediaPlayerForward()
+{
+    document.getElementById("state").innerHTML = "Forward...";
+}
+
+function handle_MediaPlayerBackward()
+{
+    document.getElementById("state").innerHTML = "Backward...";
+}
+
+function handle_MediaPlayerEndReached()
+{
+    onEnd();
+}
+
+function handle_MediaPlayerEncounteredError()
+{
+    onError();
+}
+
+function handle_MediaPlayerTimeChanged(time)
+{
+    var vlc = getVLC("vlc");
+    var info = document.getElementById("info");
+    if( vlc )
+    {
+        var mediaLen = vlc.input.length;
+        if( mediaLen > 0 )
+        {
+            // seekable media
+            info.innerHTML = formatTime(time)+"/"+formatTime(mediaLen);
+        }
+        else
+        {
+            // non-seekable "live" media
+            liveFeedRoll = liveFeedRoll & 3;
+            info.innerHTML = liveFeedText[liveFeedRoll++];
+        }
+    }
+}
+
+function handle_MediaPlayerTitleChanged(val)
+{
+    //setTitle(val);
+    document.getElementById("info").innerHTML = "Title: " + val;
+}
+
+function handle_MediaPlayerLengthChanged(val)
+{
+    //setMediaLength(val);
+}
+
+// VLC Plugin
+function onVLCPluginReady()
+{
+    registerVLCEvent("MediaPlayerMediaChanged", handleMediaPlayerMediaChanged);
+    registerVLCEvent("MediaPlayerNothingSpecial", handle_MediaPlayerNothingSpecial);
+    registerVLCEvent("MediaPlayerOpening", handle_MediaPlayerOpening);
+    registerVLCEvent("MediaPlayerBuffering", handle_MediaPlayerBuffering);
+    registerVLCEvent("MediaPlayerPlaying", handle_MediaPlayerPlaying);
+    registerVLCEvent("MediaPlayerPaused", handle_MediaPlayerPaused);
+    registerVLCEvent("MediaPlayerStopped", handle_MediaPlayerStopped);
+    registerVLCEvent("MediaPlayerForward", handle_MediaPlayerForward);
+    registerVLCEvent("MediaPlayerBackward", handle_MediaPlayerBackward);
+    registerVLCEvent("MediaPlayerEndReached", handle_MediaPlayerEndReached);
+    registerVLCEvent("MediaPlayerEncounteredError", handle_MediaPlayerEncounteredError);
+    registerVLCEvent("MediaPlayerTimeChanged", handle_MediaPlayerTimeChanged);
+    registerVLCEvent("MediaPlayerTitleChanged", handle_MediaPlayerTitleChanged);
+    registerVLCEvent("MediaPlayerLengthChanged", handle_MediaPlayerLengthChanged);
+}
+
+function close()
+{
+    unregisterVLCEvent("MediaPlayerMediaChanged", handleMediaPlayerMediaChanged);
+    unregisterVLCEvent("MediaPlayerNothingSpecial", handle_MediaPlayerNothingSpecial);
+    unregisterVLCEvent("MediaPlayerOpening", handle_MediaPlayerOpening);
+    unregisterVLCEvent("MediaPlayerBuffering", handle_MediaPlayerBuffering);
+    unregisterVLCEvent("MediaPlayerPlaying", handle_MediaPlayerPlaying);
+    unregisterVLCEvent("MediaPlayerPaused", handle_MediaPlayerPaused);
+    unregisterVLCEvent("MediaPlayerStopped", handle_MediaPlayerStopped);
+    unregisterVLCEvent("MediaPlayerForward", handle_MediaPlayerForward);
+    unregisterVLCEvent("MediaPlayerBackward", handle_MediaPlayerBackward);
+    unregisterVLCEvent("MediaPlayerEndReached", handle_MediaPlayerEndReached);
+    unregisterVLCEvent("MediaPlayerEncounteredError", handle_MediaPlayerEncounteredError);
+    unregisterVLCEvent("MediaPlayerTimeChanged", handle_MediaPlayerTimeChanged);
+    unregisterVLCEvent("MediaPlayerTitleChanged", handle_MediaPlayerTitleChanged);
+    unregisterVLCEvent("MediaPlayerLengthChanged", handle_MediaPlayerLengthChanged);
+}
+
+//-->
+</script>
+
+<body onLoad="init();" onUnLoad="close();">
+
+<table>
+    <tr>
+        <td style="text-align:center;" colspan="2">
+
+            <div id="player">
+                <!--
+                Insert VideoLAN.VLCPlugin.2
+                -->
+                <object classid="clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921"
+                        width="640"
+                        height="480"
+                        id="vlc">
+                    <param name="MRL" value="" />
+                    <param name="ShowDisplay" value="True" />
+                    <param name="AutoLoop" value="False" />
+                    <param name="AutoPlay" value="False" />
+                    <param name="Volume" value="50" />
+                    <param name="Toolbar" value="True" />
+                    <param name="StartTime" value="0" />
+                    <param name="Windowless" value="True" />
+                    <embed pluginspage="http://www.videolan.org"
+                           type="application/x-vlc-plugin"
+                           width="640"
+                           height="480"
+                           toolbar="true"
+                           loop="false"
+                           text="Waiting for video"
+                           windowless="true"
+                           bgcolor="#000000"
+                           branding="true"
+                           allowfullscreen="true"
+                           name="vlc" />
+                </object>
+            </div>
+
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            MRL:
+            <form action="javascript:doGo(document.getElementById('targetTextField').value);">
+                <input type="text" size="90" id="targetTextField" value="">
+                <input type="submit" value="Go">
+                <input type="button" value="Add" onClick="doAdd(document.getElementById('targetTextField').value);">
+            </form>
+        </td>
+    </tr>
+
+    <tr>
+        <td>
+            <input type="button" id="PlayOrPause" style="width:60px" value="Play" onClick='doPlayOrPause();'>
+            <input type="button" value="Stop" onClick='doStop();'>
+        </td>
+        <td style="width:100px; text-align:center">
+            <div id="info">-:--:--/-:--:--</div>
+            <div id="state">Idle...</div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="button" value="3D transform" onClick='doToggle3dTransform();'>
+            <input type="button" value="Change opacity" onClick='doToggleOpacity();'>
+            <input type="button" value="Rounded corners" onClick='doToggleRound();'>
+        </td>
+    </tr>
+</table>
+
+<script type="text/javascript">
+<!--
+
+function doToggle3dTransform()
+{
+    var vlc = getVLC("vlc");
+    var transform = "rotate3d(1,2,1, 45deg)";
+
+    if( vlc )
+    {
+        if( !vlc.style.transform )
+        {
+            vlc.style.transform = transform;
+            vlc.style.webkitTransform = transform;
+        }
+        else
+        {
+            vlc.style.transform = '';
+            vlc.style.webkitTransform = '';
+        }
+    }
+}
+
+function doToggleOpacity()
+{
+    var vlc = getVLC("vlc");
+    var opacity = "0.5";
+
+    if( vlc )
+    {
+        if( !vlc.style.opacity )
+        {
+            vlc.style.opacity = opacity;
+        }
+        else
+        {
+            vlc.style.opacity = '';
+        }
+    }
+}
+
+function doToggleRound()
+{
+    var vlc = getVLC("vlc");
+    var corner = "80px";
+
+    if( vlc )
+    {
+        if( !vlc.style.borderRadius )
+        {
+            vlc.style.borderRadius = corner;
+        }
+        else
+        {
+            vlc.style.borderRadius = '';
+        }
+    }
+}
+
+function formatTime(timeVal)
+{
+    if( typeof timeVal != 'number' )
+        return "-:--:--";
+
+    var timeHour = Math.round(timeVal / 1000);
+    var timeSec = timeHour % 60;
+    if( timeSec < 10 )
+        timeSec = '0'+timeSec;
+    timeHour = (timeHour - timeSec)/60;
+    var timeMin = timeHour % 60;
+    if( timeMin < 10 )
+        timeMin = '0'+timeMin;
+    timeHour = (timeHour - timeMin)/60;
+    if( timeHour > 0 )
+        return timeHour+":"+timeMin+":"+timeSec;
+    else
+        return timeMin+":"+timeSec;
+}
+
+
+/* actions */
+
+function doGo(targetURL)
+{
+    var vlc = getVLC("vlc");
+
+    if( vlc )
+    {
+        vlc.playlist.items.clear();
+        var options = [":rtsp-tcp"];
+        var itemId = vlc.playlist.add(targetURL,"",options);
+        if( itemId != -1 )
+        {
+            // play MRL
+            vlc.playlist.playItem(itemId);
+        }
+        else
+        {
+            alert("cannot play at the moment !");
+        }
+    }
+}
+
+function doAdd(targetURL)
+{
+    var vlc = getVLC("vlc");
+    var options = [":vout-filter=deinterlace", ":deinterlace-mode=linear"];
+    if( vlc )
+    {
+        vlc.playlist.add(targetURL, "", options);
+    }
+}
+
+function doPlayOrPause()
+{
+    var vlc = getVLC("vlc");
+    if( vlc )
+    {
+        if( vlc.playlist.isPlaying )
+            vlc.playlist.togglePause();
+        else
+            vlc.playlist.play();
+    }
+}
+
+function doStop()
+{
+    var vlc = getVLC("vlc");
+    if( vlc )
+        vlc.playlist.stop();
+}
+
+
+/* events */
+
+function onOpen()
+{
+    document.getElementById("state").innerHTML = "Opening...";
+    document.getElementById("PlayOrPause").value = "Pause";
+    if( liveFeedRoll != 0 )
+        liveFeedRoll = 0;
+}
+
+function onBuffer()
+{
+    document.getElementById("state").innerHTML = "Buffering...";
+    document.getElementById("PlayOrPause").value = "Pause";
+}
+
+function onPlay()
+{
+    document.getElementById("state").innerHTML = "Playing...";
+    document.getElementById("PlayOrPause").value = "Pause";
+    onPlaying();
+}
+
+function onEnd()
+{
+    document.getElementById("info").innerHTML = "-:--:--/-:--:--";
+    document.getElementById("state").innerHTML = "End...";
+    document.getElementById("PlayOrPause").value = "Play";
+}
+
+var liveFeedText = ["Live", "((Live))", "(( Live ))", "((&nbsp; Live &nbsp;))"];
+var liveFeedRoll = 0;
+
+function onPlaying()
+{
+    var vlc = getVLC("vlc");
+    var info = document.getElementById("info");
+    if( vlc )
+    {
+        var mediaLen = vlc.input.length;
+        if( mediaLen > 0 )
+        {
+            // seekable media
+            info.innerHTML = formatTime(vlc.input.time)+"/"+formatTime(mediaLen);
+        }
+        else
+        {
+            // non-seekable "live" media
+            liveFeedRoll = liveFeedRoll & 3;
+            info.innerHTML = liveFeedText[liveFeedRoll++];
+        }
+    }
+}
+
+function onPause()
+{
+    document.getElementById("state").innerHTML = "Paused...";
+    document.getElementById("PlayOrPause").value = "Play";
+}
+
+function onStop()
+{
+    document.getElementById("info").innerHTML = "-:--:--/-:--:--";
+    document.getElementById("state").innerHTML = "Stopped...";
+    document.getElementById("PlayOrPause").value = "Play";
+}
+
+function onError()
+{
+    document.getElementById("state").innerHTML = "Error...";
+}
+
+//-->
+</script>
+</body>
+</html>
